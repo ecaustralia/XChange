@@ -1,18 +1,18 @@
 package org.knowm.xchange.kraken.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.dto.Order;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrades;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.ExchangeException;
-import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.kraken.KrakenAdapters;
+import org.knowm.xchange.kraken.dto.trade.KrakenOrder;
 import org.knowm.xchange.service.trade.TradeService;
 import org.knowm.xchange.service.trade.params.CancelOrderByIdParams;
 import org.knowm.xchange.service.trade.params.CancelOrderParams;
@@ -42,7 +42,7 @@ public class KrakenTradeService extends KrakenTradeServiceRaw implements TradeSe
 
   @Override
   public OpenOrders getOpenOrders(
-      OpenOrdersParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      OpenOrdersParams params) throws IOException {
     return KrakenAdapters.adaptOpenOrders(super.getKrakenOpenOrders());
   }
 
@@ -59,13 +59,18 @@ public class KrakenTradeService extends KrakenTradeServiceRaw implements TradeSe
   }
 
   @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
+  }
+
+  @Override
   public boolean cancelOrder(String orderId) throws IOException {
 
     return super.cancelKrakenOrder(orderId).getCount() > 0;
   }
 
   @Override
-  public boolean cancelOrder(CancelOrderParams orderParams) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public boolean cancelOrder(CancelOrderParams orderParams) throws IOException {
     if (orderParams instanceof CancelOrderByIdParams) {
       return cancelOrder(((CancelOrderByIdParams) orderParams).getOrderId());
     } else {
@@ -98,7 +103,7 @@ public class KrakenTradeService extends KrakenTradeServiceRaw implements TradeSe
       offset = null;
     }
 
-    return KrakenAdapters.adaptTradesHistory(getKrakenTradeHistory(null, false, startTime, endTime, offset));
+    return KrakenAdapters.adaptTradesHistory(getKrakenTradeHistory(null, false, startTime, endTime, offset).getTrades());
   }
 
   @Override
@@ -128,9 +133,9 @@ public class KrakenTradeService extends KrakenTradeServiceRaw implements TradeSe
   }
 
   @Override
-  public Collection<Order> getOrder(
-      String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-    throw new NotYetImplementedForExchangeException();
+  public Collection<Order> getOrder(String... orderIds) throws IOException {
+
+    return KrakenAdapters.adaptOrders(super.getOrders(orderIds));
   }
 
 }

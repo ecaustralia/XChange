@@ -31,15 +31,16 @@ import org.knowm.xchange.Exchange;
 import org.knowm.xchange.coinmate.CoinmateAdapters;
 import org.knowm.xchange.coinmate.dto.account.CoinmateDepositAddresses;
 import org.knowm.xchange.coinmate.dto.trade.CoinmateTradeResponse;
+import org.knowm.xchange.coinmate.dto.trade.CoinmateTransactionHistory;
 import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.dto.account.FundingRecord;
-import org.knowm.xchange.exceptions.ExchangeException;
-import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
-import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.account.AccountService;
 import org.knowm.xchange.service.trade.params.DefaultWithdrawFundsParams;
+import org.knowm.xchange.service.trade.params.TradeHistoryParamLimit;
+import org.knowm.xchange.service.trade.params.TradeHistoryParamOffset;
 import org.knowm.xchange.service.trade.params.TradeHistoryParams;
+import org.knowm.xchange.service.trade.params.TradeHistoryParamsSorted;
 import org.knowm.xchange.service.trade.params.WithdrawFundsParams;
 
 /**
@@ -47,25 +48,27 @@ import org.knowm.xchange.service.trade.params.WithdrawFundsParams;
  */
 public class CoinmateAccountService extends CoinmateAccountServiceRaw implements AccountService {
 
+  public static final int DEFAULT_RESULT_LIMIT = 100;
+
   public CoinmateAccountService(Exchange exchange) {
     super(exchange);
   }
 
   @Override
-  public AccountInfo getAccountInfo() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public AccountInfo getAccountInfo() throws IOException {
     return new AccountInfo(CoinmateAdapters.adaptWallet(getCoinmateBalance()));
   }
 
   @Override
   public String withdrawFunds(Currency currency, BigDecimal amount,
-      String address) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      String address) throws IOException {
     CoinmateTradeResponse response = coinmateBitcoinWithdrawal(amount, address);
 
     return Long.toString(response.getData());
   }
 
   @Override
-  public String withdrawFunds(WithdrawFundsParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String withdrawFunds(WithdrawFundsParams params) throws IOException {
     if (params instanceof DefaultWithdrawFundsParams) {
       DefaultWithdrawFundsParams defaultParams = (DefaultWithdrawFundsParams) params;
       return withdrawFunds(defaultParams.currency, defaultParams.amount, defaultParams.address);
@@ -75,7 +78,7 @@ public class CoinmateAccountService extends CoinmateAccountServiceRaw implements
 
   @Override
   public String requestDepositAddress(Currency currency,
-      String... args) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      String... args) throws IOException {
     CoinmateDepositAddresses addresses = coinmateBitcoinDepositAddresses();
 
     if (addresses.getData().isEmpty()) {
@@ -88,12 +91,33 @@ public class CoinmateAccountService extends CoinmateAccountServiceRaw implements
 
   @Override
   public TradeHistoryParams createFundingHistoryParams() {
-    throw new NotAvailableFromExchangeException();
+    return new CoinmateFundingHistoryParams();
   }
 
   @Override
   public List<FundingRecord> getFundingHistory(
-      TradeHistoryParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-    throw new NotYetImplementedForExchangeException();
+      TradeHistoryParams params) throws IOException {
+
+    TradeHistoryParamsSorted.Order order = TradeHistoryParamsSorted.Order.asc;
+    int limit = 1000;
+    int offset = 0;
+
+    if (params instanceof TradeHistoryParamOffset) {
+      offset = Math.toIntExact(((TradeHistoryParamOffset) params).getOffset());
+    }
+
+    if (params instanceof TradeHistoryParamLimit) {
+      limit = ((TradeHistoryParamLimit) params).getLimit();
+    }
+
+    if (params instanceof TradeHistoryParamsSorted) {
+      order = ((TradeHistoryParamsSorted) params).getOrder();
+    }
+
+    CoinmateTransactionHistory coinmateTransactionHistory = getCoinmateTransactionHistory(offset, limit, CoinmateAdapters.adaptSortOrder(order));
+    return CoinmateAdapters.adaptFundingHistory(coinmateTransactionHistory);
+  }
+
+  public static class CoinmateFundingHistoryParams extends CoinmateTradeService.CoinmateTradeHistoryHistoryParams {
   }
 }

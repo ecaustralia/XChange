@@ -1,6 +1,7 @@
 package org.knowm.xchange.dsx.service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -20,12 +21,8 @@ import org.knowm.xchange.dsx.dto.trade.DSXTransHistoryResult;
 import org.knowm.xchange.dsx.service.trade.params.DSXTradeHistoryParams;
 import org.knowm.xchange.dsx.service.trade.params.DSXTransHistoryParams;
 import org.knowm.xchange.dto.Order;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrades;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.ExchangeException;
-import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.trade.TradeService;
 import org.knowm.xchange.service.trade.params.CancelOrderByIdParams;
@@ -62,7 +59,7 @@ public class DSXTradeService extends DSXTradeServiceRaw implements TradeService 
 
   @Override
   public OpenOrders getOpenOrders(OpenOrdersParams params)
-      throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      throws IOException {
 
     Map<Long, DSXOrder> orders = getDSXActiveOrders(null);
     return DSXAdapters.adaptOrders(orders);
@@ -83,11 +80,16 @@ public class DSXTradeService extends DSXTradeServiceRaw implements TradeService 
 
     String pair = DSXAdapters.getPair(limitOrder.getCurrencyPair());
 
-    DSXOrder dsxOrder = new DSXOrder(pair, type, limitOrder.getOriginalAmount(), limitOrder.getLimitPrice(),
-        3, DSXOrder.OrderType.limit);
+    DSXOrder dsxOrder = new DSXOrder(pair, type, limitOrder.getOriginalAmount(), limitOrder.getOriginalAmount(), limitOrder.getLimitPrice(),
+        3, DSXOrder.OrderType.limit, null);
 
     DSXTradeResult result = tradeDSX(dsxOrder);
     return Long.toString(result.getOrderId());
+  }
+
+  @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
   }
 
   @Override
@@ -96,7 +98,7 @@ public class DSXTradeService extends DSXTradeServiceRaw implements TradeService 
   }
 
   @Override
-  public boolean cancelOrder(CancelOrderParams orderParams) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public boolean cancelOrder(CancelOrderParams orderParams) throws IOException {
     if (orderParams instanceof CancelOrderByIdParams) {
       return cancelOrder(((CancelOrderByIdParams) orderParams).getOrderId());
     } else {
@@ -185,7 +187,7 @@ public class DSXTradeService extends DSXTradeServiceRaw implements TradeService 
   }
 
   @Override
-  public Collection<Order> getOrder(String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public Collection<Order> getOrder(String... orderIds) throws IOException {
     throw new NotYetImplementedForExchangeException();
   }
 

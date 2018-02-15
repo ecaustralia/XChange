@@ -6,11 +6,7 @@ import java.util.Date;
 
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.Trades;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrades;
-import org.knowm.xchange.exceptions.ExchangeException;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.livecoin.LivecoinExchange;
@@ -27,13 +23,18 @@ public class LivecoinTradeService extends LivecoinTradeServiceRaw implements Tra
   }
 
   @Override
-  public String placeMarketOrder(MarketOrder marketOrder) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String placeMarketOrder(MarketOrder marketOrder) throws IOException {
     return makeMarketOrder(marketOrder);
   }
 
   @Override
-  public String placeLimitOrder(LimitOrder limitOrder) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String placeLimitOrder(LimitOrder limitOrder) throws IOException {
     return makeLimitOrder(limitOrder);
+  }
+
+  @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
   }
 
   @Override
@@ -60,12 +61,12 @@ public class LivecoinTradeService extends LivecoinTradeServiceRaw implements Tra
   }
 
   @Override
-  public OpenOrders getOpenOrders(OpenOrdersParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public OpenOrders getOpenOrders(OpenOrdersParams params) throws IOException {
     return new OpenOrders(getAllOpenOrders());
   }
 
   @Override
-  public OpenOrders getOpenOrders() throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public OpenOrders getOpenOrders() throws IOException {
     return getOpenOrders(createOpenOrdersParams());
   }
 
@@ -90,7 +91,7 @@ public class LivecoinTradeService extends LivecoinTradeServiceRaw implements Tra
   }
 
   @Override
-  public Collection<Order> getOrder(String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public Collection<Order> getOrder(String... orderIds) throws IOException {
     throw new NotAvailableFromExchangeException();
   }
 }

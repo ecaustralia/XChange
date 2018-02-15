@@ -1,15 +1,5 @@
 package org.knowm.xchange.gdax;
 
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-
 import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
@@ -25,10 +15,7 @@ import org.knowm.xchange.dto.marketdata.Trades.TradeSortType;
 import org.knowm.xchange.dto.meta.CurrencyMetaData;
 import org.knowm.xchange.dto.meta.CurrencyPairMetaData;
 import org.knowm.xchange.dto.meta.ExchangeMetaData;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrade;
-import org.knowm.xchange.dto.trade.UserTrades;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.gdax.dto.account.GDAXAccount;
 import org.knowm.xchange.gdax.dto.marketdata.GDAXProduct;
 import org.knowm.xchange.gdax.dto.marketdata.GDAXProductBook;
@@ -40,6 +27,19 @@ import org.knowm.xchange.gdax.dto.trade.GDAXFill;
 import org.knowm.xchange.gdax.dto.trade.GDAXOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GDAXAdapters {
 
@@ -98,6 +98,7 @@ public class GDAXAdapters {
   public static Ticker adaptTicker(GDAXProductTicker ticker, GDAXProductStats stats, CurrencyPair currencyPair) {
 
     BigDecimal last = ticker.getPrice();
+    BigDecimal open = stats.getOpen();
     BigDecimal high = stats.getHigh();
     BigDecimal low = stats.getLow();
     BigDecimal buy = ticker.getBid();
@@ -105,7 +106,17 @@ public class GDAXAdapters {
     BigDecimal volume = ticker.getVolume();
     Date date = parseDate(ticker.getTime());
 
-    return new Ticker.Builder().currencyPair(currencyPair).last(last).high(high).low(low).bid(buy).ask(sell).volume(volume).timestamp(date).build();
+    return new Ticker.Builder()
+        .currencyPair(currencyPair)
+        .last(last)
+        .open(open)
+        .high(high)
+        .low(low)
+        .bid(buy)
+        .ask(sell)
+        .volume(volume)
+        .timestamp(date)
+        .build();
   }
 
   public static OrderBook adaptOrderBook(GDAXProductBook book, CurrencyPair currencyPair) {
@@ -118,11 +129,14 @@ public class GDAXAdapters {
 
   private static List<LimitOrder> toLimitOrderList(GDAXProductBookEntry[] levels, OrderType orderType, CurrencyPair currencyPair) {
 
-    List<LimitOrder> allLevels = new ArrayList<>(levels.length);
-    for (int i = 0; i < levels.length; i++) {
-      GDAXProductBookEntry ask = levels[i];
+    List<LimitOrder> allLevels = new ArrayList<>();
 
-      allLevels.add(new LimitOrder(orderType, ask.getVolume(), currencyPair, "0", null, ask.getPrice()));
+    if (levels != null) {
+      for (int i = 0; i < levels.length; i++) {
+        GDAXProductBookEntry ask = levels[i];
+
+        allLevels.add(new LimitOrder(orderType, ask.getVolume(), currencyPair, "0", null, ask.getPrice()));
+      }
     }
 
     return allLevels;
@@ -142,36 +156,124 @@ public class GDAXAdapters {
     return new Wallet(gdaxAccounts[0].getProfile_id(), balances);
   }
 
+  @SuppressWarnings("unchecked")
   public static OpenOrders adaptOpenOrders(GDAXOrder[] coinbaseExOpenOrders) {
-    List<LimitOrder> orders = new ArrayList<>(coinbaseExOpenOrders.length);
-
-    for (int i = 0; i < coinbaseExOpenOrders.length; i++) {
-      GDAXOrder order = coinbaseExOpenOrders[i];
-
-      OrderType type = order.getSide().equals("buy") ? OrderType.BID : OrderType.ASK;
-      CurrencyPair currencyPair = new CurrencyPair(order.getProductId().replace('-', '/'));
-
-      Date createdAt = parseDate(order.getCreatedAt());
-
-      OrderStatus orderStatus = order.getFilledSize().compareTo(BigDecimal.ZERO) == 0 ?
-          Order.OrderStatus.NEW : Order.OrderStatus.PARTIALLY_FILLED;
-
-      LimitOrder limitOrder = new LimitOrder(type, order.getSize(), currencyPair,
-          order.getId(), createdAt, order.getPrice(), order.getPrice(), order.getFilledSize(), orderStatus);
-
-      orders.add(limitOrder);
-    }
-
-    return new OpenOrders(orders);
+    Stream<Order> orders = Arrays.asList(coinbaseExOpenOrders).stream().map(GDAXAdapters::adaptOrder);
+    Map<Boolean, List<Order>> twoTypes = orders.collect(Collectors.partitioningBy(t -> t instanceof LimitOrder));
+    @SuppressWarnings("rawtypes")
+    List limitOrders = twoTypes.get(true);
+    return new OpenOrders(limitOrders, twoTypes.get(false));
   }
 
-  public static LimitOrder adaptOrder(String orderId, GDAXOrder order) {
+  public static Order adaptOrder(GDAXOrder order) {
     OrderType type = order.getSide().equals("buy") ? OrderType.BID : OrderType.ASK;
     CurrencyPair currencyPair = new CurrencyPair(order.getProductId().replace('-', '/'));
 
     Date createdAt = parseDate(order.getCreatedAt());
 
-    return (new LimitOrder(type, order.getSize(), currencyPair, order.getId(), createdAt, order.getPrice()));
+    OrderStatus orderStatus = adaptOrderStatus(order);
+
+    final BigDecimal averagePrice;
+    if (order.getFilledSize().signum() == 0) {
+      averagePrice = BigDecimal.ZERO;
+    } else {
+      averagePrice = order.getExecutedvalue().divide(order.getFilledSize(), new MathContext(8));
+    }
+
+    if(order.getType().equals("market")) {
+      return new MarketOrder(
+              type,
+              order.getSize(),
+              currencyPair,
+              order.getId(),
+              createdAt,
+              averagePrice,
+              order.getFilledSize(),
+              order.getFillFees(),
+              orderStatus
+              );
+    } else if(order.getType().equals("limit")) {
+      if (order.getStop() == null) {
+        return new LimitOrder(
+                type,
+                order.getSize(),
+                currencyPair,
+                order.getId(),
+                createdAt,
+                order.getPrice(),
+                averagePrice,
+                order.getFilledSize(),
+                order.getFillFees(),
+                orderStatus);
+      } else {
+        return new StopOrder(
+            type,
+            order.getSize(),
+            currencyPair,
+            order.getId(),
+            createdAt,
+            order.getStopPrice(),
+            averagePrice,
+            order.getFilledSize(),
+            orderStatus);
+      }
+    }
+
+    return null;
+  }
+
+
+  public static OrderStatus[] adaptOrderStatuses(GDAXOrder[] orders) {
+
+    OrderStatus[] orderStatuses = new OrderStatus[orders.length];
+
+    Integer i = 0;
+    for (GDAXOrder gdaxOrder : orders) {
+            orderStatuses[i++] = adaptOrderStatus(gdaxOrder);
+    }
+
+    return orderStatuses;
+
+  }
+
+  /** The status from the GDAXOrder object converted to xchange status */
+  public static OrderStatus adaptOrderStatus(GDAXOrder order) {
+
+    if(order.getStatus().equals("pending")) {
+      return OrderStatus.PENDING_NEW;
+    }
+
+    if(order.getStatus().equals("done") || order.getStatus().equals("settled")) {
+
+      if(order.getDoneReason().equals("filled")) {
+        return OrderStatus.FILLED;
+      }
+
+      return OrderStatus.UNKNOWN;
+    }
+
+
+
+    if(order.getFilledSize().signum() == 0) {
+
+      if(order.getStatus().equals("open") && order.getStop() != null) {
+        // This is a massive edge case of a stop triggering but not immediately
+        // fulfilling.  STOPPED status is only currently used by the HitBTC and
+        // YoBit implementations and in both cases it looks like a
+        // misunderstanding and those should return CANCELLED.  Should we just
+        // remove this status?
+        return OrderStatus.STOPPED;
+      }
+
+      return OrderStatus.NEW;
+
+    }
+
+    if(order.getFilledSize().compareTo(BigDecimal.ZERO) > 0
+            && order.getSize().compareTo(order.getFilledSize()) < 0)
+      return OrderStatus.PARTIALLY_FILLED;
+
+    return OrderStatus.UNKNOWN;
   }
 
   public static UserTrades adaptTradeHistory(GDAXFill[] coinbaseExFills) {
@@ -185,9 +287,17 @@ public class GDAXAdapters {
 
       CurrencyPair currencyPair = new CurrencyPair(fill.getProductId().replace('-', '/'));
 
-      // TODO add fee amount
-      UserTrade t = new UserTrade(type, fill.getSize(), currencyPair, fill.getPrice(), parseDate(fill.getCreatedAt()),
-          String.valueOf(fill.getTradeId()), fill.getOrderId(), fill.getFee(), (Currency) null);
+      UserTrade t = new UserTrade(
+          type,
+          fill.getSize(),
+          currencyPair,
+          fill.getPrice(),
+          parseDate(fill.getCreatedAt()),
+          String.valueOf(fill.getTradeId()),
+          fill.getOrderId(),
+          fill.getFee(),
+          currencyPair.counter
+      );
       trades.add(t);
     }
 
@@ -217,7 +327,7 @@ public class GDAXAdapters {
 
   public static ExchangeMetaData adaptToExchangeMetaData(ExchangeMetaData exchangeMetaData, GDAXProduct[] products) {
 
-    Map<CurrencyPair, CurrencyPairMetaData> currencyPairs = new HashMap<>();
+    Map<CurrencyPair, CurrencyPairMetaData> currencyPairs = exchangeMetaData.getCurrencyPairs();
     Map<Currency, CurrencyMetaData> currencies = exchangeMetaData.getCurrencies();
     for (GDAXProduct product : products) {
 

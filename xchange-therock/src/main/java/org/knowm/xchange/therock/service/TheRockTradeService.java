@@ -7,10 +7,7 @@ import java.util.Date;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrades;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.ExchangeException;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
@@ -54,6 +51,11 @@ public class TheRockTradeService extends TheRockTradeServiceRaw implements Trade
     return placedOrder.getId().toString();
   }
 
+  @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
+  }
+
   /**
    * Not available from exchange since TheRock needs currency pair in order to return open orders
    */
@@ -64,7 +66,7 @@ public class TheRockTradeService extends TheRockTradeServiceRaw implements Trade
 
   @Override
   public OpenOrders getOpenOrders(
-      OpenOrdersParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      OpenOrdersParams params) throws IOException {
     CurrencyPair currencyPair = null;
 
     if (params instanceof OpenOrdersParamCurrencyPair) {
@@ -93,7 +95,7 @@ public class TheRockTradeService extends TheRockTradeServiceRaw implements Trade
 
   @Override
   public boolean cancelOrder(
-      CancelOrderParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      CancelOrderParams params) throws IOException {
     if (!(params instanceof CancelOrderByIdParams)) {
       return false;
     }
@@ -120,7 +122,7 @@ public class TheRockTradeService extends TheRockTradeServiceRaw implements Trade
    */
   @Override
   public Collection<Order> getOrder(
-      String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      String... orderIds) throws IOException {
     throw new NotAvailableFromExchangeException();
   }
 

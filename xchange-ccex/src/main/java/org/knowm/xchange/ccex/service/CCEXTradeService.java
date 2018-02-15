@@ -9,11 +9,7 @@ import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ccex.CCEXAdapters;
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.Trades.TradeSortType;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrades;
-import org.knowm.xchange.exceptions.ExchangeException;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.trade.TradeService;
@@ -35,13 +31,13 @@ public class CCEXTradeService extends CCEXTradeServiceRaw implements TradeServic
 
   @Override
   public OpenOrders getOpenOrders(
-      OpenOrdersParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      OpenOrdersParams params) throws IOException {
     return new OpenOrders(CCEXAdapters.adaptOpenOrders(getCCEXOpenOrders()));
   }
 
   @Override
   public String placeMarketOrder(
-      MarketOrder marketOrder) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      MarketOrder marketOrder) throws IOException {
     throw new NotAvailableFromExchangeException();
   }
 
@@ -53,12 +49,17 @@ public class CCEXTradeService extends CCEXTradeServiceRaw implements TradeServic
   }
 
   @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
+  }
+
+  @Override
   public boolean cancelOrder(String orderId) throws IOException {
     return cancelCCEXLimitOrder(orderId);
   }
 
   @Override
-  public boolean cancelOrder(CancelOrderParams orderParams) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public boolean cancelOrder(CancelOrderParams orderParams) throws IOException {
     if (orderParams instanceof CancelOrderByIdParams) {
       return cancelOrder(((CancelOrderByIdParams) orderParams).getOrderId());
     } else {
@@ -83,7 +84,7 @@ public class CCEXTradeService extends CCEXTradeServiceRaw implements TradeServic
 
   @Override
   public Collection<Order> getOrder(
-      String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      String... orderIds) throws IOException {
     throw new NotYetImplementedForExchangeException();
   }
 

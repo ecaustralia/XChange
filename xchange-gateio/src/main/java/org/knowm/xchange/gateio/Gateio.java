@@ -1,7 +1,6 @@
 package org.knowm.xchange.gateio;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.GET;
@@ -41,7 +40,7 @@ public interface Gateio {
   GateioTicker getTicker(@PathParam("ident") String tradeableIdentifier, @PathParam("currency") String currency) throws IOException;
 
   @GET
-  @Path("depth/{ident}_{currency}")
+  @Path("orderBook/{ident}_{currency}")
   GateioDepth getFullDepth(@PathParam("ident") String tradeableIdentifier, @PathParam("currency") String currency) throws IOException;
 
   @GET

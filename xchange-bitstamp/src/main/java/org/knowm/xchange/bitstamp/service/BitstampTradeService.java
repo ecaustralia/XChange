@@ -18,12 +18,9 @@ import org.knowm.xchange.bitstamp.dto.trade.BitstampUserTransaction;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.Order.OrderType;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrades;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.ExchangeException;
-import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
+import org.knowm.xchange.exceptions.NonceException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.trade.TradeService;
 import org.knowm.xchange.service.trade.params.CancelOrderByIdParams;
@@ -67,9 +64,13 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Tra
   }
 
   @Override
-  public String placeMarketOrder(MarketOrder marketOrder) throws IOException, BitstampException {
-
-    throw new NotAvailableFromExchangeException();
+  public String placeMarketOrder(MarketOrder order) throws IOException, BitstampException {
+    BitstampAuthenticatedV2.Side side = order.getType().equals(BID) ? BitstampAuthenticatedV2.Side.buy : BitstampAuthenticatedV2.Side.sell;
+    BitstampOrder bitstampOrder = placeBitstampMarketOrder(order.getCurrencyPair(), side, order.getOriginalAmount());
+    if (bitstampOrder.getErrorMessage() != null) {
+      throw new ExchangeException(bitstampOrder.getErrorMessage());
+    }
+    return Integer.toString(bitstampOrder.getId());
   }
 
   @Override
@@ -84,13 +85,18 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Tra
   }
 
   @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
+  }
+
+  @Override
   public boolean cancelOrder(String orderId) throws IOException, BitstampException {
 
     return cancelBitstampOrder(Integer.parseInt(orderId));
   }
 
   @Override
-  public boolean cancelOrder(CancelOrderParams orderParams) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public boolean cancelOrder(CancelOrderParams orderParams) throws IOException {
     if (orderParams instanceof CancelOrderByIdParams) {
       return cancelOrder(((CancelOrderByIdParams) orderParams).getOrderId());
     } else {
@@ -136,8 +142,16 @@ public class BitstampTradeService extends BitstampTradeServiceRaw implements Tra
 
   @Override
   public Collection<Order> getOrder(
-      String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-    throw new NotYetImplementedForExchangeException();
+      String... orderIds) throws IOException {
+
+    Collection<Order> orders = new ArrayList<>(orderIds.length);
+
+    for (String orderId : orderIds) {
+      orders.add(BitstampAdapters.adaptOrder(orderId,super.getBitstampOrder(Long.parseLong(orderId))));
+    }
+
+    return orders;
+
   }
 
 }

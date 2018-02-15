@@ -1,10 +1,5 @@
 package org.knowm.xchange.bitfinex.v1.service;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.bitfinex.v1.BitfinexAdapters;
 import org.knowm.xchange.bitfinex.v1.BitfinexUtils;
@@ -13,16 +8,13 @@ import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.dto.account.FundingRecord;
 import org.knowm.xchange.exceptions.ExchangeException;
-import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
-import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.account.AccountService;
-import org.knowm.xchange.service.trade.params.DefaultTradeHistoryParamsTimeSpan;
-import org.knowm.xchange.service.trade.params.DefaultWithdrawFundsParams;
-import org.knowm.xchange.service.trade.params.TradeHistoryParamCurrency;
-import org.knowm.xchange.service.trade.params.TradeHistoryParamLimit;
-import org.knowm.xchange.service.trade.params.TradeHistoryParams;
-import org.knowm.xchange.service.trade.params.TradeHistoryParamsTimeSpan;
-import org.knowm.xchange.service.trade.params.WithdrawFundsParams;
+import org.knowm.xchange.service.trade.params.*;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
 
 public class BitfinexAccountService extends BitfinexAccountServiceRaw implements AccountService {
 
@@ -39,7 +31,7 @@ public class BitfinexAccountService extends BitfinexAccountServiceRaw implements
   @Override
   public AccountInfo getAccountInfo() throws IOException {
 
-    return new AccountInfo(BitfinexAdapters.adaptWallet(getBitfinexAccountInfo()));
+    return new AccountInfo(BitfinexAdapters.adaptWallets(getBitfinexAccountInfo()));
   }
 
   /**
@@ -65,7 +57,7 @@ public class BitfinexAccountService extends BitfinexAccountServiceRaw implements
   }
 
   @Override
-  public String withdrawFunds(WithdrawFundsParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String withdrawFunds(WithdrawFundsParams params) throws IOException {
     if (params instanceof DefaultWithdrawFundsParams) {
       DefaultWithdrawFundsParams defaultParams = (DefaultWithdrawFundsParams) params;
       return withdrawFunds(defaultParams.currency, defaultParams.amount, defaultParams.address);

@@ -80,6 +80,8 @@ public class BitstampAccountService extends BitstampAccountServiceRaw implements
         response = withdrawEthFunds(defaultParams.amount, defaultParams.address);
       } else if (defaultParams.currency.equals(Currency.BTC)) {
         response = withdrawBtcFunds(defaultParams.amount, defaultParams.address);
+      } else if (defaultParams.currency.equals(Currency.BCH)) {
+          response = withdrawBchFunds(defaultParams.amount, defaultParams.address);
       } else {
         throw new IllegalStateException("Cannot withdraw " + defaultParams.currency);
       }

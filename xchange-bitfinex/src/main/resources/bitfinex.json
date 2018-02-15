@@ -4,11 +4,23 @@
       "price_scale": 2,
       "min_amount": 0.01000000
     },
+    "BTG/USD": {
+      "price_scale": 2,
+      "min_amount": 0.01000000
+    },
+    "BTC/EUR": {
+      "price_scale": 2,
+      "min_amount": 0.01000000
+    },
     "LTC/USD": {
       "price_scale": 4,
       "min_amount": 0.10000000
     },
     "LTC/BTC": {
+      "price_scale": 6,
+      "min_amount": 0.10000000
+    },
+    "BTG/BTC": {
       "price_scale": 6,
       "min_amount": 0.10000000
     },
@@ -30,6 +42,10 @@
     },
     "ZEC/BTC": {
       "price_scale": 6,
+      "min_amount": 0.0100000
+    },
+    "IOT/BTC": {
+      "price_scale": 8,
       "min_amount": 0.0100000
     },
     "ZEC/USD": {
@@ -92,6 +108,14 @@
       "price_scale": 8,
       "min_amount": 0.10000000
     },
+    "OMG/BTC": {
+      "price_scale": 8,
+      "min_amount": 0.10000000
+    },
+    "OMG/ETH": {
+      "price_scale": 8,
+      "min_amount": 0.1
+    },
     "BCH/USD": {
       "price_scale": 4,
       "min_amount": 0.10000000
@@ -99,28 +123,68 @@
   },
   "currencies": {
     "BTC": {
-      "scale": 8
+      "scale": 8,
+      "withdrawal_fee": 0.0005
     },
     "BCH": {
-      "scale": 8
+      "scale": 8,
+      "withdrawal_fee": 0.0005
     },
     "ETH": {
-      "scale": 8
+      "scale": 8,
+      "withdrawal_fee": 0.01
     },
-    "IOT": {
-      "scale": 8
+    "ETC": {
+      "scale": 8,
+      "withdrawal_fee": 0.01
     },
     "LTC": {
-      "scale": 8
+      "scale": 8,
+      "withdrawal_fee": 0.001
     },
     "XRP": {
-      "scale": 8
+      "scale": 8,
+      "withdrawal_fee": 0.02
     },
     "USD": {
-      "scale": 2
+      "scale": 2,
+      "withdrawal_fee": 0
+    },
+    "EUR": {
+      "scale": 2,
+      "withdrawal_fee": 0
     },
     "XMR": {
-      "scale": 8
+      "scale": 8,
+      "withdrawal_fee": 0.04
+    },
+    "ZEC": {
+      "scale": 8,
+      "withdrawal_fee": 0.001
+    },
+    "DASH": {
+      "scale": 8,
+      "withdrawal_fee": 0.01
+    },
+    "OMG": {
+      "scale": 8,
+      "withdrawal_fee": 0.01
+    },
+    "BTG": {
+      "scale": 8,
+      "withdrawal_fee": 0.01
+    },
+    "EOS": {
+      "scale": 8,
+      "withdrawal_fee":  0.31641
+    },
+    "IOT": {
+      "scale": 8,
+      "withdrawal_fee": 0.5
+    },
+    "USDT": {
+      "scale": 8,
+      "withdrawal_fee": 20.0
     }
   }
 }

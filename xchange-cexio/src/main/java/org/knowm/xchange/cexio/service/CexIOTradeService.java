@@ -12,12 +12,7 @@ import org.knowm.xchange.cexio.dto.trade.CexIOOpenOrder;
 import org.knowm.xchange.cexio.dto.trade.CexIOOrder;
 import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.Trades;
-import org.knowm.xchange.dto.trade.LimitOrder;
-import org.knowm.xchange.dto.trade.MarketOrder;
-import org.knowm.xchange.dto.trade.OpenOrders;
-import org.knowm.xchange.dto.trade.UserTrade;
-import org.knowm.xchange.dto.trade.UserTrades;
-import org.knowm.xchange.exceptions.ExchangeException;
+import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.trade.TradeService;
@@ -50,7 +45,7 @@ public class CexIOTradeService extends CexIOTradeServiceRaw implements TradeServ
 
   @Override
   public OpenOrders getOpenOrders(
-      OpenOrdersParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      OpenOrdersParams params) throws IOException {
 
     List<CexIOOrder> cexIOOrderList;
     if (params instanceof OpenOrdersParamCurrencyPair) {
@@ -77,13 +72,18 @@ public class CexIOTradeService extends CexIOTradeServiceRaw implements TradeServ
   }
 
   @Override
+  public String placeStopOrder(StopOrder stopOrder) throws IOException {
+    throw new NotYetImplementedForExchangeException();
+  }
+
+  @Override
   public boolean cancelOrder(String orderId) throws IOException {
 
     return cancelCexIOOrder(orderId);
   }
 
   @Override
-  public boolean cancelOrder(CancelOrderParams orderParams) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public boolean cancelOrder(CancelOrderParams orderParams) throws IOException {
     if (orderParams instanceof CancelOrderByIdParams) {
       return cancelOrder(((CancelOrderByIdParams) orderParams).getOrderId());
     } else {
@@ -115,7 +115,7 @@ public class CexIOTradeService extends CexIOTradeServiceRaw implements TradeServ
 
   @Override
   public Collection<Order> getOrder(
-      String... orderIds) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+      String... orderIds) throws IOException {
 
     List<Order> orders = new ArrayList<>();
     for (String orderId : orderIds) {

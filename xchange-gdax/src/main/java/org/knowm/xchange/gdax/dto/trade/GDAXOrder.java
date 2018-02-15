@@ -16,11 +16,19 @@ public class GDAXOrder {
   private final BigDecimal fillFees;
   private final String status;
   private final boolean settled;
+  private final String type;
+  private final String doneReason;
+  private final BigDecimal executedvalue;
+  private final String stop;
+  private final BigDecimal stopPrice;
+
 
   public GDAXOrder(@JsonProperty("id") String id, @JsonProperty("price") BigDecimal price, @JsonProperty("size") BigDecimal size,
       @JsonProperty("product_id") String productId, @JsonProperty("side") String side, @JsonProperty("created_at") String createdAt,
       @JsonProperty("done_at") String doneAt, @JsonProperty("filled_size") BigDecimal filledSize, @JsonProperty("fill_fees") BigDecimal fillFees,
-      @JsonProperty("status") String status, @JsonProperty("settled") boolean settled) {
+      @JsonProperty("status") String status, @JsonProperty("settled") boolean settled, @JsonProperty("type") String type,
+                   @JsonProperty("done_reason") String doneReason, @JsonProperty("executed_value") BigDecimal executedValue,
+                   @JsonProperty("stop") String stop, @JsonProperty("stop_price") BigDecimal stopPrice) {
     this.id = id;
     this.price = price;
     this.size = size;
@@ -32,6 +40,11 @@ public class GDAXOrder {
     this.fillFees = fillFees;
     this.status = status;
     this.settled = settled;
+    this.type = type;
+    this.doneReason = doneReason;
+    this.executedvalue = executedValue;
+    this.stop = stop;
+    this.stopPrice = stopPrice;
   }
 
   public String getId() {
@@ -78,6 +91,26 @@ public class GDAXOrder {
     return settled;
   }
 
+  public String getType() {
+    return type;
+  }
+
+  public String getDoneReason() {
+    return doneReason;
+  }
+
+  public BigDecimal getExecutedvalue() {
+    return executedvalue;
+  }
+
+  public String getStop() {
+    return stop;
+  }
+
+  public BigDecimal getStopPrice() {
+    return stopPrice;
+  }
+
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
@@ -103,8 +136,11 @@ public class GDAXOrder {
     builder.append(status);
     builder.append(", settled=");
     builder.append(settled);
+    builder.append(", stop=");
+    builder.append(stop);
+    builder.append(", stopPrice=");
+    builder.append(stopPrice);
     builder.append("]");
     return builder.toString();
   }
-
 }

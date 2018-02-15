@@ -12,7 +12,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.knowm.xchange.bitstamp.dto.BitstampException;
+import org.knowm.xchange.bitstamp.dto.BitstampTransferBalanceResponse;
 import org.knowm.xchange.bitstamp.dto.account.BitstampWithdrawal;
+import org.knowm.xchange.bitstamp.dto.account.WithdrawalRequest;
 import org.knowm.xchange.bitstamp.dto.trade.BitstampOrder;
 import org.knowm.xchange.bitstamp.dto.trade.BitstampUserTransaction;
 
@@ -28,6 +30,12 @@ public interface BitstampAuthenticatedV2 {
   @Path("open_orders/{pair}/")
   BitstampOrder[] getOpenOrders(@FormParam("key") String apiKey, @FormParam("signature") ParamsDigest signer,
       @FormParam("nonce") SynchronizedValueFactory<Long> nonce, @PathParam("pair") BitstampV2.Pair pair) throws BitstampException, IOException;
+
+  @POST
+  @Path("{side}/market/{pair}/")
+  BitstampOrder placeMarketOrder(@FormParam("key") String apiKey, @FormParam("signature") ParamsDigest signer,
+      @FormParam("nonce") SynchronizedValueFactory<Long> nonce, @PathParam("side") Side side, @PathParam("pair") BitstampV2.Pair pair,
+      @FormParam("amount") BigDecimal amount) throws BitstampException, IOException;
 
   @POST
   @Path("{side}/{pair}/")
@@ -65,9 +73,26 @@ public interface BitstampAuthenticatedV2 {
       @FormParam("address") String address) throws BitstampException, IOException;
 
   @POST
+  @Path("bch_withdrawal/")
+  BitstampWithdrawal bchWithdrawal(@FormParam("key") String apiKey, @FormParam("signature") ParamsDigest signer,
+      @FormParam("nonce") SynchronizedValueFactory<Long> nonce, @FormParam("amount") BigDecimal amount,
+      @FormParam("address") String address) throws BitstampException, IOException;
+
+  @POST
   @Path("eth_withdrawal/")
   BitstampWithdrawal withdrawEther(@FormParam("key") String apiKey, @FormParam("signature") ParamsDigest signer,
       @FormParam("nonce") SynchronizedValueFactory<Long> nonce, @FormParam("amount") BigDecimal amount,
       @FormParam("address") String address) throws BitstampException, IOException;
+
+  @POST
+  @Path("transfer-to-main/")
+  BitstampTransferBalanceResponse transferSubAccountBalanceToMain(@FormParam("key") String apiKey, @FormParam("signature") ParamsDigest signer,
+      @FormParam("nonce") SynchronizedValueFactory<Long> nonce, @FormParam("amount") BigDecimal amount,
+      @FormParam("currency") String currency, @FormParam("subAccount") String subAccount) throws BitstampException, IOException;
+
+  @POST
+  @Path("withdrawal-requests/")
+  WithdrawalRequest[] getWithdrawalRequests(@FormParam("key") String apiKey, @FormParam("signature") ParamsDigest signer,
+      @FormParam("nonce") SynchronizedValueFactory<Long> nonce, @FormParam("timedelta") Long timeDelta) throws BitstampException, IOException;
 
 }

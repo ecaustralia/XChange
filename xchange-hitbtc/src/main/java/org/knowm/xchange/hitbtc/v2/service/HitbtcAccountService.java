@@ -9,9 +9,7 @@ import org.knowm.xchange.Exchange;
 import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.dto.account.AccountInfo;
 import org.knowm.xchange.dto.account.FundingRecord;
-import org.knowm.xchange.exceptions.ExchangeException;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
-import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.hitbtc.v2.HitbtcAdapters;
 import org.knowm.xchange.hitbtc.v2.dto.HitbtcTransaction;
 import org.knowm.xchange.service.account.AccountService;
@@ -34,11 +32,11 @@ public class HitbtcAccountService extends HitbtcAccountServiceRaw implements Acc
   @Override
   public String withdrawFunds(Currency currency, BigDecimal amount, String address) throws IOException {
 
-    return withdrawFundsRaw(currency, amount, address);
+    return withdrawFundsRaw(currency, amount, address, null);
   }
 
   @Override
-  public String withdrawFunds(WithdrawFundsParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public String withdrawFunds(WithdrawFundsParams params) throws IOException {
 
     if (params instanceof DefaultWithdrawFundsParams) {
       DefaultWithdrawFundsParams defaultParams = (DefaultWithdrawFundsParams) params;
@@ -50,8 +48,7 @@ public class HitbtcAccountService extends HitbtcAccountServiceRaw implements Acc
 
   @Override
   public String requestDepositAddress(Currency currency, String... args) throws IOException {
-
-    return getDepositAddress(currency.toString());
+    return getDepositAddress(currency).getAddress();
   }
 
   @Override
@@ -61,9 +58,21 @@ public class HitbtcAccountService extends HitbtcAccountServiceRaw implements Acc
   }
 
   @Override
-  public List<FundingRecord> getFundingHistory(TradeHistoryParams params) throws ExchangeException, NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+  public List<FundingRecord> getFundingHistory(TradeHistoryParams params) throws IOException {
 
-    List<HitbtcTransaction> transactions = getTransactions();
+    List<HitbtcTransaction> transactions;
+
+    if (params instanceof TradeHistoryParams) {
+      HitbtcFundingHistoryParams hitbtcTradeHistoryParams = (HitbtcFundingHistoryParams) params;
+
+      String currency = hitbtcTradeHistoryParams.getCurrency() != null ? hitbtcTradeHistoryParams.getCurrency().getCurrencyCode() : null;
+
+      transactions = getTransactions(currency, hitbtcTradeHistoryParams.getLimit(), hitbtcTradeHistoryParams.getOffset());
+    }
+
+    else {
+      transactions = getTransactions(null, null, null);
+    }
 
     List<FundingRecord> records = new ArrayList<>();
     for (HitbtcTransaction transaction : transactions) {
